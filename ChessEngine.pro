@@ -15,3 +15,19 @@ HEADERS += \
 RESOURCES += \
     UI/Images.qrc
 
+OTHER_FILES += \
+    release/ChessEngine.exe \
+    UI/Images/backup_style_classic.png \
+    UI/Images/exp.png \
+    UI/Images/screenshot.png \
+    UI/Images/style_classic.png \
+    release/icudt51.dll \
+    release/icuin51.dll \
+    release/icuuc51.dll \
+    release/libgcc_s_dw2-1.dll \
+    release/libstdc++-6.dll \
+    release/libwinpthread-1.dll \
+    release/Qt5Core.dll \
+    release/Qt5Gui.dll \
+    release/Qt5Widgets.dll
+
