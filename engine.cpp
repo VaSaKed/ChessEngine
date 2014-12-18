@@ -43,10 +43,11 @@ float Engine::minimax(int depth, Piece::Color maximazingPlayer)
     if (movesList.size() == 0)
         return evaluatePosition(maximazingPlayer);
 
+    std::random_shuffle(movesList.begin(), movesList.end()); // randomize the order of moves
+
     float bestValue = 0.0;
     if (board.side() == maximazingPlayer) {
         bestValue = -INFINITY;
-        std::random_shuffle(movesList.begin(), movesList.end());
         for (Move move : movesList) {
             board.make(move);
             float val = minimax( depth-1, maximazingPlayer );
