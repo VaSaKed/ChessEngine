@@ -1,8 +1,6 @@
 #ifndef BOARD_H
 #define BOARD_H
 
-#include <array>
-#include <vector>
 #include "enginetypes.h"
 
 namespace Chess {
@@ -10,7 +8,7 @@ namespace Chess {
 class Board
 {
 public: // !!!
-    std::array<Piece,64> squares;
+    Array<Piece,64> squares;
     Vector<Move> movesDone;
     Piece::Color m_sideToMove;
 

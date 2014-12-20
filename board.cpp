@@ -9,15 +9,23 @@ Vector<Move> Board::possibleMoves(const Coord from) const
 
     if (piece.type() == Piece::Pawn) {
         /* Pawn Move */
-        to = (piece.color() == Piece::White) ? from.nextFile() : from.prevFile();
+        to = (piece.color() == Piece::White) ? from.nextRank() : from.prevRank();
         if (to.isValid() && !isOccupied(to)) {
+            // Handle Promotion
+            if (to.rank() == (piece.color() == Piece::White ? 7 : 0) ) {
+                movesList.emplace_back(from, to, piece, squares[to], Piece(Piece::Queen,  piece.color()));
+                movesList.emplace_back(from, to, piece, squares[to], Piece(Piece::Knight, piece.color()));
+                movesList.emplace_back(from, to, piece, squares[to], Piece(Piece::Rook,   piece.color()));
+                movesList.emplace_back(from, to, piece, squares[to], Piece(Piece::Bishop, piece.color()));
+            } else {
                 movesList.emplace_back(from, to, piece);
+            }
         }
 
         /* Pawn double move */
-        to = (piece.color() == Piece::White) ? from.nextFile() : from.prevFile();
+        to = (piece.color() == Piece::White) ? from.nextRank() : from.prevRank();
         if (!piece.moved() && !isOccupied(to)) {
-            to = (piece.color() == Piece::White) ? to.nextFile() : to.prevFile();
+            to = (piece.color() == Piece::White) ? to.nextRank() : to.prevRank();
             if (to.isValid() && !isOccupied(to)) {
                 movesList.emplace_back(from, to, piece);
             }
@@ -35,16 +43,16 @@ Vector<Move> Board::possibleMoves(const Coord from) const
         }
     }
     if (piece.type() == Piece::King) {
-        to = from.nextRank();
-        if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
-            movesList.emplace_back(from, to, piece, squares[to]);
-        to = from.prevRank();
-        if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
-            movesList.emplace_back(from, to, piece, squares[to]);
         to = from.nextFile();
         if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
             movesList.emplace_back(from, to, piece, squares[to]);
         to = from.prevFile();
+        if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
+            movesList.emplace_back(from, to, piece, squares[to]);
+        to = from.nextRank();
+        if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
+            movesList.emplace_back(from, to, piece, squares[to]);
+        to = from.prevRank();
         if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
             movesList.emplace_back(from, to, piece, squares[to]);
 
@@ -71,34 +79,34 @@ Vector<Move> Board::possibleMoves(const Coord from) const
         Coord diagAntiB = from.prevDiagAnti();
 
         if (diagMainF.isValid()){
-            to = diagMainF.nextRank();
+            to = diagMainF.nextFile();
             if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
                 movesList.emplace_back(from, to, piece, squares[to]);
-            to = diagMainF.nextFile();
+            to = diagMainF.nextRank();
             if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
                 movesList.emplace_back(from, to, piece, squares[to]);
         }
         if (diagAntiF.isValid()){
-            to = diagAntiF.prevRank();
+            to = diagAntiF.prevFile();
             if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
                 movesList.emplace_back(from, to, piece, squares[to]);
-            to = diagAntiF.nextFile();
+            to = diagAntiF.nextRank();
             if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
                 movesList.emplace_back(from, to, piece, squares[to]);
         }
         if (diagMainB.isValid()){
-            to = diagMainB.prevRank();
+            to = diagMainB.prevFile();
             if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
                 movesList.emplace_back(from, to, piece, squares[to]);
-            to = diagMainB.prevFile();
+            to = diagMainB.prevRank();
             if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
                 movesList.emplace_back(from, to, piece, squares[to]);
         }
         if (diagAntiB.isValid()){
-            to = diagAntiB.nextRank();
+            to = diagAntiB.nextFile();
             if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
                 movesList.emplace_back(from, to, piece, squares[to]);
-            to = diagAntiB.prevFile();
+            to = diagAntiB.prevRank();
             if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
                 movesList.emplace_back(from, to, piece, squares[to]);
         }
@@ -149,26 +157,6 @@ Vector<Move> Board::possibleMoves(const Coord from) const
 
     if ( piece.type() == Piece::Rook || piece.type() == Piece::Queen) {
         /* Piece ray right */
-        for (to=from.nextRank(); to.isValid(); to=to.nextRank()){
-            if (isOccupied(to)) {
-                if (piece.color() != squares[to].color() ) {
-                    movesList.emplace_back(from, to, piece, squares[to]);
-                }
-                break;
-            }
-            movesList.emplace_back(from, to, piece);
-        }
-        /* Piece ray left */
-        for (to=from.prevRank(); to.isValid(); to=to.prevRank()){
-            if (isOccupied(to)) {
-                if (piece.color() != squares[to].color() ) {
-                    movesList.emplace_back(from, to, piece, squares[to]);
-                }
-                break;
-            }
-            movesList.emplace_back(from, to, piece);
-        }
-        /* Piece ray up */
         for (to=from.nextFile(); to.isValid(); to=to.nextFile()){
             if (isOccupied(to)) {
                 if (piece.color() != squares[to].color() ) {
@@ -178,8 +166,28 @@ Vector<Move> Board::possibleMoves(const Coord from) const
             }
             movesList.emplace_back(from, to, piece);
         }
-        /* Piece ray down */
+        /* Piece ray left */
         for (to=from.prevFile(); to.isValid(); to=to.prevFile()){
+            if (isOccupied(to)) {
+                if (piece.color() != squares[to].color() ) {
+                    movesList.emplace_back(from, to, piece, squares[to]);
+                }
+                break;
+            }
+            movesList.emplace_back(from, to, piece);
+        }
+        /* Piece ray up */
+        for (to=from.nextRank(); to.isValid(); to=to.nextRank()){
+            if (isOccupied(to)) {
+                if (piece.color() != squares[to].color() ) {
+                    movesList.emplace_back(from, to, piece, squares[to]);
+                }
+                break;
+            }
+            movesList.emplace_back(from, to, piece);
+        }
+        /* Piece ray down */
+        for (to=from.prevRank(); to.isValid(); to=to.prevRank()){
             if (isOccupied(to)) {
                 if (piece.color() != squares[to].color() ) {
                     movesList.emplace_back(from, to, piece, squares[to]);
@@ -209,10 +217,15 @@ Vector<Move> Board::possibleMoves(Piece::Color forSide) const
 void Board::make(Move move)
 {
     Piece srcPiece = move.sourcePiece();
-    srcPiece.setMoved(true);
 
-    setPiece(move.source(), Piece());
-    setPiece(move.target(), srcPiece);
+    if ( !move.isPromotion() ) {
+        srcPiece.setMoved(true);
+        setPiece(move.source(), Piece());
+        setPiece(move.target(), srcPiece);
+    } else {
+        setPiece(move.source(), Piece());
+        setPiece(move.target(), move.promotedPiece());
+    }
 
     movesDone.emplace_back(move);
     m_sideToMove = (side() == Piece::White) ? Piece::Black : Piece::White;
@@ -220,6 +233,9 @@ void Board::make(Move move)
 
 void Board::unmake()
 {
+    if (movesDone.size() == 0)
+        return;
+
     Move move = movesDone.back();
     setPiece(move.source(), move.sourcePiece());
     setPiece(move.target(), move.targetPiece());

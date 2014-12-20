@@ -25,7 +25,7 @@ public slots:
     void setPiece(Chess::Coord coord, Chess::Piece piece) {
 
         uBoard.setPiece(coord, piece);
-        updateSquare(coord.rank(), 7-coord.file());
+        updateSquare(coord.file(), 7-coord.rank());
     }
 
 protected:
@@ -113,19 +113,19 @@ private:
             QByteArray itemData = event->mimeData()->data("application/x-dnditemdata");
             QDataStream dataStream(&itemData, QIODevice::ReadOnly);
 
-            int srcRank;
             int srcFile;
+            int srcRank;
 
-            dataStream >> srcRank >> srcFile;
+            dataStream >> srcFile >> srcRank;
 
-            int trgtRank = event->pos().x() / squareSize.width();
-            int trgtFile = 7 - event->pos().y() / squareSize.width();
+            int trgtFile = event->pos().x() / squareSize.width();
+            int trgtRank = 7 - event->pos().y() / squareSize.width();
 
-            Chess::Piece src  = uBoard.piece(Chess::Coord(srcRank, srcFile));
-            Chess::Piece trgt = uBoard.piece(Chess::Coord(trgtRank, trgtFile));
+            Chess::Piece src  = uBoard.piece(Chess::Coord(srcFile, srcRank));
+            Chess::Piece trgt = uBoard.piece(Chess::Coord(trgtFile, trgtRank));
 
-            emit userMoved(Chess::Move(Chess::Coord(srcRank, srcFile),
-                                       Chess::Coord(trgtRank, trgtFile),
+            emit userMoved(Chess::Move(Chess::Coord(srcFile, srcRank),
+                                       Chess::Coord(trgtFile, trgtRank),
                                        src,
                                        trgt));
 
@@ -138,10 +138,10 @@ private:
     void mousePressEvent(QMouseEvent *event){
 
         QLabel *square = static_cast<QLabel*>(childAt(event->pos()));
-        int srcRank = event->pos().x()/squareSize.width();
-        int srcFile = 7 - event->pos().y()/squareSize.width();
+        int srcFile = event->pos().x()/squareSize.width();
+        int srcRank = 7 - event->pos().y()/squareSize.width();
 
-        if (!uBoard.isOccupied(Chess::Coord(srcRank, srcFile))) {
+        if (!uBoard.isOccupied(Chess::Coord(srcFile, srcRank))) {
             event->ignore();
             return;
         }
@@ -150,7 +150,7 @@ private:
 
         QByteArray itemData;
         QDataStream dataStream(&itemData, QIODevice::WriteOnly);
-        dataStream << srcRank << srcFile;
+        dataStream << srcFile << srcRank;
 
         QMimeData *mimeData = new QMimeData;
         mimeData->setData("application/x-dnditemdata", itemData);
@@ -168,7 +168,7 @@ private:
 
         square->setPixmap(tempPixmap);
         drag->exec(Qt::MoveAction);
-        updateSquare(srcRank, 7-srcFile);
+        updateSquare(srcFile, 7-srcRank);
     }
 signals:
     void userMoved(Chess::Move move);

@@ -10,7 +10,9 @@ namespace Chess{
 
 using int8  = std::int8_t;
 using uint8 = std::uint8_t;
+using real  = float;
 template <typename T> using Vector = std::vector<T, std::allocator<T>>;
+template <typename T, std::size_t N> using Array = std::array<T, N>;
 
 class Coord {
     int8 ofst;
@@ -23,57 +25,57 @@ public:
     constexpr Coord(int8_t value)
         : ofst( value >= 64 || value < 0 ? INVALID : value) {}
 
-    constexpr Coord(int8_t rank, int8_t file)
-        : ofst( rank >= 8 || rank < 0 || file >= 8 || file < 0 ? INVALID : rank+file*8) {}
+    constexpr Coord(int8_t file, int8_t rank)
+        : ofst( file >= 8 || file < 0 || rank >= 8 || rank < 0 ? INVALID : file+rank*8) {}
 
     constexpr bool isValid() const {
         return ofst >= 0 && ofst < 64;
     }
 
-    constexpr int8 rank() const {
+    constexpr int8 file() const {
         return ofst%8;
     }
 
-    constexpr int8 file() const {
+    constexpr int8 rank() const {
         return ofst/8;
     }
 
-    constexpr Coord nextRank() const {
+    constexpr Coord nextFile() const {
         return (ofst%8 == 7) ? Coord() : Coord(ofst + 1);
     }
 
-    constexpr Coord prevRank() const {
+    constexpr Coord prevFile() const {
         return (ofst%8 == 0) ? Coord() : Coord(ofst - 1);
     }
 
-    constexpr Coord nextFile() const {
+    constexpr Coord nextRank() const {
         return (ofst/8 == 7) ? Coord() : Coord(ofst + 8);
     }
 
-    constexpr Coord prevFile() const {
+    constexpr Coord prevRank() const {
         return (ofst/8 == 0) ? Coord() : Coord(ofst - 8);
     }
 
     /* Bottom-Left to Top-Right */
     constexpr Coord nextDiagMain() const {
-        return nextRank().isValid() && nextFile().isValid()
-                ? nextRank().nextFile() : Coord();
+        return nextFile().isValid() && nextRank().isValid()
+                ? nextFile().nextRank() : Coord();
     }
 
     constexpr Coord prevDiagMain() const {
-        return prevRank().isValid() && prevFile().isValid()
-                ? prevRank().prevFile() : Coord();
+        return prevFile().isValid() && prevRank().isValid()
+                ? prevFile().prevRank() : Coord();
     }
 
     /* Bottom-Right to Top-Left */
     constexpr Coord nextDiagAnti() const {
-        return prevRank().isValid() && nextFile().isValid()
-                ? prevRank().nextFile() : Coord();
+        return prevFile().isValid() && nextRank().isValid()
+                ? prevFile().nextRank() : Coord();
     }
 
     constexpr Coord prevDiagAnti() const {
-        return nextRank().isValid() && prevFile().isValid()
-                ? nextRank().prevFile() : Coord();
+        return nextFile().isValid() && prevRank().isValid()
+                ? nextFile().prevRank() : Coord();
     }
 
     constexpr operator int8() const
@@ -158,14 +160,17 @@ class Move {
     Coord trgt;
     Piece srcPiece;
     Piece trgtPiece;
+    // store the promoted-to piece in the move class
+    // probably a bad solution, but easy to implement
+    Piece m_promotedPiece; // !!! sizeof(Move) > 32; member is very rarely used
 
 public:
 
     constexpr Move()
-        : src(), trgt(), srcPiece(), trgtPiece() {}
+        : src(), trgt(), srcPiece(), trgtPiece(), m_promotedPiece() {}
 
-    constexpr Move(Coord source, Coord target, Piece sourcePiece, Piece targetPiece = Piece())
-        : src(source), trgt(target), srcPiece(sourcePiece), trgtPiece(targetPiece) {}
+    constexpr Move(Coord source, Coord target, Piece sourcePiece, Piece targetPiece = Piece(), Piece promotedPiece = Piece())
+        : src(source), trgt(target), srcPiece(sourcePiece), trgtPiece(targetPiece), m_promotedPiece(promotedPiece) {}
 
     constexpr bool isValid() const {
         return src.isValid() && trgt.isValid() && !srcPiece.isEmpty();
@@ -187,9 +192,18 @@ public:
         return trgtPiece;
     }
 
+    constexpr Piece promotedPiece() const {
+        return m_promotedPiece;
+    }
+
+    constexpr bool isPromotion() const {
+        return !m_promotedPiece.isEmpty();
+    }
+
     constexpr bool operator==(Move other) {
         return src == other.src && trgt == other.trgt
-                && srcPiece == other.srcPiece && trgtPiece == other.trgtPiece;
+                && srcPiece == other.srcPiece && trgtPiece == other.trgtPiece
+                && m_promotedPiece == other.m_promotedPiece;
     }
 
 }; // !class Move

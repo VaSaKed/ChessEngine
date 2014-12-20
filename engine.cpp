@@ -88,11 +88,11 @@ void Engine::userMoved(Move move)
     if ( isValidMove ) {
         makeMove(move);
         qDebug() << QString("---Move #%1---").arg(board.movesDone.size());
-        qDebug() << "My Move:" << move.source().rank() << move.source().file() << "to" << move.target().rank() << move.target().file();
+        qDebug() << "My Move:" << move.source().file() << move.source().rank() << "to" << move.target().file() << move.target().rank();
     } else {
-        qDebug() << "Invalid move:" << move.source().rank() << move.source().file() << "to" << move.target().rank() << move.target().file();
+        qDebug() << "Invalid move:" << move.source().file() << move.source().rank() << "to" << move.target().file() << move.target().rank();
         for (Move move : posmovs) {
-            qDebug() << "   Valid moves:" << move.source().rank() << move.source().file() << "to" << move.target().rank() << move.target().file();
+            qDebug() << "   Valid moves:" << move.source().file() << move.source().rank() << "to" << move.target().file() << move.target().rank();
         }
         return;
     }
@@ -100,8 +100,8 @@ void Engine::userMoved(Move move)
     think(4, Piece::Black);
     QCoreApplication::processEvents();
 
-    qDebug() << "AI Move:" << minimaxMove.source().rank() << minimaxMove.source().file()
-             << "to" << minimaxMove.target().rank() << minimaxMove.target().file()
+    qDebug() << "AI Move:" << minimaxMove.source().file() << minimaxMove.source().rank()
+             << "to" << minimaxMove.target().file() << minimaxMove.target().rank()
              << QString("(Analized %1 moves)").arg(minimaxMoveCnt);
 
     qDebug() << QString("-------------");
@@ -123,7 +123,7 @@ void Engine::makeMove(Move move)
 {
     board.make(move);
     emit squareChanged(move.source(), Piece());
-    emit squareChanged(move.target(), move.sourcePiece());
+    emit squareChanged(move.target(), move.isPromotion() ? move.promotedPiece() : move.sourcePiece() );
 }
 
 void Engine::setPiece(Coord coord, Piece piece)
