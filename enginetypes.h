@@ -156,54 +156,78 @@ public:
 
 class Move {
 
-    Coord src;
+    Coord orig;
     Coord trgt;
-    Piece srcPiece;
-    Piece trgtPiece;
-    // store the promoted-to piece in the move class
-    // probably a bad solution, but easy to implement
-    Piece m_promotedPiece; // !!! sizeof(Move) > 32; member is very rarely used
+    Piece origPiece;
+    Piece captPiece;
+    uint8 moveType;
 
 public:
+    enum MoveType : uint8 {
+        Standart        = 0,
+        PromoteToQueen  = 1,
+        PromoteToKnight = (1<<1),
+        PromoteToRook   = (1<<2),
+        PromoteToBishop = (1<<3),
+        CastleRight     = (1<<4),
+        CastleLeft      = (1<<5)
+    };
 
     constexpr Move()
-        : src(), trgt(), srcPiece(), trgtPiece(), m_promotedPiece() {}
+        : orig(), trgt(), origPiece(), captPiece(), moveType(Standart) {}
 
-    constexpr Move(Coord source, Coord target, Piece sourcePiece, Piece targetPiece = Piece(), Piece promotedPiece = Piece())
-        : src(source), trgt(target), srcPiece(sourcePiece), trgtPiece(targetPiece), m_promotedPiece(promotedPiece) {}
+    constexpr Move(Coord origin, Coord target, Piece sourcePiece, Piece capturedPiece = Piece(), MoveType moveType = Standart)
+        : orig(origin), trgt(target), origPiece(sourcePiece), captPiece(capturedPiece), moveType(moveType) {}
 
     constexpr bool isValid() const {
-        return src.isValid() && trgt.isValid() && !srcPiece.isEmpty();
+        return !origPiece.isEmpty() && orig.isValid() && trgt.isValid();
     }
 
-    constexpr Coord source() const{
-        return src;
+    constexpr Coord origin() const{
+        return orig;
     }
 
     constexpr Coord target() const{
         return trgt;
     }
 
-    constexpr Piece sourcePiece() const {
-        return srcPiece;
+    constexpr Piece originPiece() const {
+        return origPiece;
     }
 
-    constexpr Piece targetPiece() const {
-        return trgtPiece;
+    constexpr Piece capturedPiece() const {
+        return captPiece;
     }
 
-    constexpr Piece promotedPiece() const {
-        return m_promotedPiece;
+    constexpr MoveType type() const {
+        return MoveType(moveType);
     }
 
     constexpr bool isPromotion() const {
-        return !m_promotedPiece.isEmpty();
+        return moveType == PromoteToQueen || moveType == PromoteToKnight
+                || moveType == PromoteToRook || moveType == PromoteToBishop;
+    }
+
+    constexpr Piece promotedPiece() const {
+        return moveType == PromoteToQueen ? Piece(Piece::Queen, origPiece.color())
+            : moveType == PromoteToKnight ? Piece(Piece::Knight, origPiece.color())
+            : moveType == PromoteToRook   ? Piece(Piece::Rook, origPiece.color())
+            : moveType == PromoteToBishop ? Piece(Piece::Bishop, origPiece.color())
+            : Piece();
+    }
+
+    constexpr bool isCastle() const {
+        return moveType == CastleRight || moveType == CastleLeft;
+    }
+
+    constexpr bool sameVector(Move other) {
+        return orig == other.orig && trgt == other.trgt;
     }
 
     constexpr bool operator==(Move other) {
-        return src == other.src && trgt == other.trgt
-                && srcPiece == other.srcPiece && trgtPiece == other.trgtPiece
-                && m_promotedPiece == other.m_promotedPiece;
+        return orig == other.orig && trgt == other.trgt
+                && origPiece == other.origPiece && captPiece == other.captPiece
+                && moveType == other.moveType;
     }
 
 }; // !class Move

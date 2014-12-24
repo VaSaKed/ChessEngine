@@ -13,10 +13,10 @@ Vector<Move> Board::possibleMoves(const Coord from) const
         if (to.isValid() && !isOccupied(to)) {
             // Handle Promotion
             if (to.rank() == (piece.color() == Piece::White ? 7 : 0) ) {
-                movesList.emplace_back(from, to, piece, squares[to], Piece(Piece::Queen,  piece.color()));
-                movesList.emplace_back(from, to, piece, squares[to], Piece(Piece::Knight, piece.color()));
-                movesList.emplace_back(from, to, piece, squares[to], Piece(Piece::Rook,   piece.color()));
-                movesList.emplace_back(from, to, piece, squares[to], Piece(Piece::Bishop, piece.color()));
+                movesList.emplace_back(from, to, piece, squares[to], Move::PromoteToQueen);
+                movesList.emplace_back(from, to, piece, squares[to], Move::PromoteToKnight);
+                movesList.emplace_back(from, to, piece, squares[to], Move::PromoteToRook);
+                movesList.emplace_back(from, to, piece, squares[to], Move::PromoteToBishop);
             } else {
                 movesList.emplace_back(from, to, piece);
             }
@@ -34,41 +34,49 @@ Vector<Move> Board::possibleMoves(const Coord from) const
         /* Pawn Take Left */
         to = (piece.color() == Piece::White) ? from.nextDiagAnti() : from.prevDiagAnti();
         if (to.isValid() && isOccupied(to) && squares[to].color() != piece.color()) {
-            movesList.emplace_back(from, to, piece, squares[to]);
+            // Handle Promotion
+            if (to.rank() == (piece.color() == Piece::White ? 7 : 0) ) {
+                movesList.emplace_back(from, to, piece, squares[to], Move::PromoteToQueen);
+                movesList.emplace_back(from, to, piece, squares[to], Move::PromoteToKnight);
+                movesList.emplace_back(from, to, piece, squares[to], Move::PromoteToRook);
+                movesList.emplace_back(from, to, piece, squares[to], Move::PromoteToBishop);
+            } else {
+                movesList.emplace_back(from, to, piece, squares[to]);
+            }
         }
+
         /* Pawn Take Right */
         to = (piece.color() == Piece::White) ? from.nextDiagMain() : from.prevDiagMain();
         if (to.isValid() && isOccupied(to) && squares[to].color() != piece.color()) {
-            movesList.emplace_back(from, to, piece, squares[to]);
+            // Handle Promotion
+            if (to.rank() == (piece.color() == Piece::White ? 7 : 0) ) {
+                movesList.emplace_back(from, to, piece, squares[to], Move::PromoteToQueen);
+                movesList.emplace_back(from, to, piece, squares[to], Move::PromoteToKnight);
+                movesList.emplace_back(from, to, piece, squares[to], Move::PromoteToRook);
+                movesList.emplace_back(from, to, piece, squares[to], Move::PromoteToBishop);
+            } else {
+                movesList.emplace_back(from, to, piece, squares[to]);
+            }
         }
     }
+
     if (piece.type() == Piece::King) {
-        to = from.nextFile();
-        if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
-            movesList.emplace_back(from, to, piece, squares[to]);
-        to = from.prevFile();
-        if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
-            movesList.emplace_back(from, to, piece, squares[to]);
-        to = from.nextRank();
-        if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
-            movesList.emplace_back(from, to, piece, squares[to]);
-        to = from.prevRank();
-        if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
-            movesList.emplace_back(from, to, piece, squares[to]);
 
-        to = from.nextDiagMain();
-        if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
-            movesList.emplace_back(from, to, piece, squares[to]);
-        to = from.prevDiagMain();
-        if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
-            movesList.emplace_back(from, to, piece, squares[to]);
-        to = from.nextDiagAnti();
-        if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
-            movesList.emplace_back(from, to, piece, squares[to]);
-        to = from.prevDiagAnti();
-        if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
-            movesList.emplace_back(from, to, piece, squares[to]);
+        for (int direction=0; direction < 8; direction++) {
+            switch (direction) {
+                case 0: to = from.nextFile(); break;
+                case 1: to = from.prevFile(); break;
+                case 2: to = from.nextRank(); break;
+                case 3: to = from.prevRank(); break;
+                case 4: to = from.nextDiagMain(); break;
+                case 5: to = from.prevDiagMain(); break;
+                case 6: to = from.nextDiagAnti();break;
+                case 7: to = from.prevDiagAnti(); break;
+            }
 
+            if (to.isValid() && (!isOccupied(to) || (isOccupied(to) && squares[to].color() != piece.color())))
+                movesList.emplace_back(from, to, piece, squares[to]);
+        }
     }
 
     if (piece.type() == Piece::Knight) {
@@ -113,88 +121,58 @@ Vector<Move> Board::possibleMoves(const Coord from) const
     }
 
     if (piece.type() == Piece::Bishop || piece.type() == Piece::Queen ) {
-        /* Piece ray up-right */
-        for (to=from.nextDiagMain(); to.isValid(); to=to.nextDiagMain()){
-            if (isOccupied(to)) {
-                if (piece.color() != squares[to].color() ) {
-                    movesList.emplace_back(from, to, piece, squares[to]);
+        for(int direction=0; direction < 4; ++direction) {
+
+            to = from;
+            while(to.isValid()) {
+
+                switch (direction) {
+                case 0: to = to.nextDiagMain(); break;
+                case 1: to = to.prevDiagMain(); break;
+                case 2: to = to.nextDiagAnti(); break;
+                case 3: to = to.prevDiagAnti(); break;
                 }
-                break;
-            }
-            movesList.emplace_back(from, to, piece);
-        }
-        /* Piece ray down-left */
-        for (to=from.prevDiagMain(); to.isValid(); to=to.prevDiagMain()){
-            if (isOccupied(to)) {
-                if (piece.color() != squares[to].color() ) {
-                    movesList.emplace_back(from, to, piece, squares[to]);
+
+                if (!to.isValid())
+                    break;
+
+                if (!isOccupied(to)) {
+                    movesList.emplace_back(from, to, piece);
+                } else {
+                    if ( piece.color() != squares[to].color() )
+                        movesList.emplace_back(from, to, piece, squares[to]);
+                    break;
                 }
-                break;
+
             }
-            movesList.emplace_back(from, to, piece);
-        }
-        /* Piece ray up-left */
-        for (to=from.nextDiagAnti(); to.isValid(); to=to.nextDiagAnti()){
-            if (isOccupied(to)) {
-                if (piece.color() != squares[to].color() ) {
-                    movesList.emplace_back(from, to, piece, squares[to]);
-                }
-                break;
-            }
-            movesList.emplace_back(from, to, piece);
-        }
-        /* Piece ray down-left */
-        for (to=from.prevDiagAnti(); to.isValid(); to=to.prevDiagAnti()){
-            if (isOccupied(to)) {
-                if (piece.color() != squares[to].color() ) {
-                    movesList.emplace_back(from, to, piece, squares[to]);
-                }
-                break;
-            }
-            movesList.emplace_back(from, to, piece);
         }
     }
 
     if ( piece.type() == Piece::Rook || piece.type() == Piece::Queen) {
-        /* Piece ray right */
-        for (to=from.nextFile(); to.isValid(); to=to.nextFile()){
-            if (isOccupied(to)) {
-                if (piece.color() != squares[to].color() ) {
-                    movesList.emplace_back(from, to, piece, squares[to]);
+        for(int direction=0; direction < 4; ++direction) {
+
+            to = from;
+            while(to.isValid()) {
+
+                switch (direction) {
+                case 0: to = to.nextFile(); break;
+                case 1: to = to.prevFile(); break;
+                case 2: to = to.nextRank(); break;
+                case 3: to = to.prevRank(); break;
                 }
-                break;
-            }
-            movesList.emplace_back(from, to, piece);
-        }
-        /* Piece ray left */
-        for (to=from.prevFile(); to.isValid(); to=to.prevFile()){
-            if (isOccupied(to)) {
-                if (piece.color() != squares[to].color() ) {
-                    movesList.emplace_back(from, to, piece, squares[to]);
+
+                if (!to.isValid())
+                    break;
+
+                if (!isOccupied(to)) {
+                    movesList.emplace_back(from, to, piece);
+                } else {
+                    if ( piece.color() != squares[to].color() )
+                        movesList.emplace_back(from, to, piece, squares[to]);
+                    break;
                 }
-                break;
+
             }
-            movesList.emplace_back(from, to, piece);
-        }
-        /* Piece ray up */
-        for (to=from.nextRank(); to.isValid(); to=to.nextRank()){
-            if (isOccupied(to)) {
-                if (piece.color() != squares[to].color() ) {
-                    movesList.emplace_back(from, to, piece, squares[to]);
-                }
-                break;
-            }
-            movesList.emplace_back(from, to, piece);
-        }
-        /* Piece ray down */
-        for (to=from.prevRank(); to.isValid(); to=to.prevRank()){
-            if (isOccupied(to)) {
-                if (piece.color() != squares[to].color() ) {
-                    movesList.emplace_back(from, to, piece, squares[to]);
-                }
-                break;
-            }
-            movesList.emplace_back(from, to, piece);
         }
     }
 
@@ -216,14 +194,14 @@ Vector<Move> Board::possibleMoves(Piece::Color forSide) const
 
 void Board::make(Move move)
 {
-    Piece srcPiece = move.sourcePiece();
+    Piece piece = move.originPiece();
 
-    if ( !move.isPromotion() ) {
-        srcPiece.setMoved(true);
-        setPiece(move.source(), Piece());
-        setPiece(move.target(), srcPiece);
-    } else {
-        setPiece(move.source(), Piece());
+    if (move.type() == Move::Standart){
+        piece.setMoved(true);
+        setPiece(move.origin(), Piece());
+        setPiece(move.target(), piece);
+    } else if (move.isPromotion()) {
+        setPiece(move.origin(), Piece());
         setPiece(move.target(), move.promotedPiece());
     }
 
@@ -237,11 +215,15 @@ void Board::unmake()
         return;
 
     Move move = movesDone.back();
-    setPiece(move.source(), move.sourcePiece());
-    setPiece(move.target(), move.targetPiece());
+
+    if (move.type() == Move::Standart || move.isPromotion()) {
+        setPiece(move.origin(), move.originPiece());
+        setPiece(move.target(), move.capturedPiece());
+    }
+
     movesDone.pop_back();
 
-    m_sideToMove = move.sourcePiece().color();
+    m_sideToMove = move.originPiece().color();
 }
 
 } // namespace ChessEngine

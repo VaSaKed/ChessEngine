@@ -29,7 +29,7 @@ signals:
     void squareChanged(Chess::Coord coord, Chess::Piece newPiece);
 
 public slots:
-    void userMoved(Chess::Move move);
+    void userMoved(Chess::Move userMove);
     void makeMove(Chess::Move move);
     void setPiece(Chess::Coord coord, Chess::Piece piece);
 

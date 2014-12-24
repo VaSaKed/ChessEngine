@@ -73,34 +73,36 @@ float Engine::minimax(int depth, Piece::Color maximazingPlayer)
     return bestValue;
 }
 
-void Engine::userMoved(Move move)
+void Engine::userMoved(Move userMove)
 {
-    bool isValidMove = false;
-    Vector<Move> posmovs = board.possibleMoves(board.side());
-    if (posmovs.size() == 0 ) {
-        qDebug() << "End of the game";
-        return;
-    }
+    Vector<Move> possibleMoves = board.possibleMoves(board.side());
 
-    for (Move validMove : posmovs) {
-        if (move.source() == validMove.source() && move.target() == validMove.target() ) isValidMove = true;
+    Move validMove;
+    for (Move move : possibleMoves) {
+        if ( move.sameVector(userMove) ) {
+            validMove = move;
+            break;
+        }
     }
-    if ( isValidMove ) {
-        makeMove(move);
+    if ( validMove.isValid() ) {
+        makeMove(validMove);
         qDebug() << QString("---Move #%1---").arg(board.movesDone.size());
-        qDebug() << "My Move:" << move.source().file() << move.source().rank() << "to" << move.target().file() << move.target().rank();
-    } else {
-        qDebug() << "Invalid move:" << move.source().file() << move.source().rank() << "to" << move.target().file() << move.target().rank();
-        for (Move move : posmovs) {
-            qDebug() << "   Valid moves:" << move.source().file() << move.source().rank() << "to" << move.target().file() << move.target().rank();
+        qDebug() << "My Move:" << userMove.origin().file() << userMove.origin().rank() << "to" << userMove.target().file() << userMove.target().rank();
+    } else if (possibleMoves.size() > 0){
+        qDebug() << "Invalid move:" << userMove.origin().file() << userMove.origin().rank() << "to" << userMove.target().file() << userMove.target().rank();
+        for (Move move : possibleMoves) {
+            qDebug() << "   Valid moves:" << move.origin().file() << move.origin().rank() << "to" << move.target().file() << move.target().rank();
         }
         return;
+    } else {
+        qDebug() << "Game Over";
     }
+
     QCoreApplication::processEvents();
     think(4, Piece::Black);
     QCoreApplication::processEvents();
 
-    qDebug() << "AI Move:" << minimaxMove.source().file() << minimaxMove.source().rank()
+    qDebug() << "AI Move:" << minimaxMove.origin().file() << minimaxMove.origin().rank()
              << "to" << minimaxMove.target().file() << minimaxMove.target().rank()
              << QString("(Analized %1 moves)").arg(minimaxMoveCnt);
 
@@ -108,12 +110,13 @@ void Engine::userMoved(Move move)
     if (minimaxMove.isValid()) {
         makeMove(minimaxMove);
     } else {
-        qDebug() << "End of the Game";
+        qDebug() << "Game Over";
     }
 }
 
 void Engine::think(int depth, Piece::Color maximazingPlayer)
 {
+    minimaxMove = Move();
     minimaxDepth = depth;
     minimaxMoveCnt = 0;
     qDebug() << "AI Score:" << minimax(depth, maximazingPlayer);
@@ -122,8 +125,8 @@ void Engine::think(int depth, Piece::Color maximazingPlayer)
 void Engine::makeMove(Move move)
 {
     board.make(move);
-    emit squareChanged(move.source(), Piece());
-    emit squareChanged(move.target(), move.isPromotion() ? move.promotedPiece() : move.sourcePiece() );
+    emit squareChanged(move.origin(), Piece());
+    emit squareChanged(move.target(), move.isPromotion() ? move.promotedPiece() : move.originPiece() );
 }
 
 void Engine::setPiece(Coord coord, Piece piece)
