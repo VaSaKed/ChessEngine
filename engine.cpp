@@ -20,7 +20,7 @@ float Engine::evaluatePosition(Piece::Color forSide)
     }
 
     qreal weight =
-            100.0 * (pCnt[Piece::White][Piece::King]   - pCnt[Piece::Black][Piece::King])
+            //100.0 * (pCnt[Piece::White][Piece::King]   - pCnt[Piece::Black][Piece::King])
             + 9.0 * (pCnt[Piece::White][Piece::Queen]  - pCnt[Piece::Black][Piece::Queen])
             + 5.0 * (pCnt[Piece::White][Piece::Rook]   - pCnt[Piece::Black][Piece::Rook])
             + 3.0 * (pCnt[Piece::White][Piece::Bishop] - pCnt[Piece::Black][Piece::Bishop])
@@ -38,12 +38,18 @@ float Engine::minimax(int depth, Piece::Color maximazingPlayer)
     if (depth == 0)
         return evaluatePosition(maximazingPlayer);
 
-    /* No Valid Moves */
-    Vector<Move> movesList = board.possibleMoves(board.side());
-    if (movesList.size() == 0)
-        return evaluatePosition(maximazingPlayer);
 
+    Vector<Move> movesList = board.possibleMoves(board.side());
     std::random_shuffle(movesList.begin(), movesList.end()); // randomize the order of moves
+
+    /* No Valid Moves */
+    if (movesList.size() == 0) {
+        if (board.isKingAttacked(board.side())) {
+            return board.side() == maximazingPlayer ? -INFINITY : +INFINITY;
+        } else {
+            return 0.0;     // It's a draw
+        }
+    }
 
     float bestValue = 0.0;
     if (board.side() == maximazingPlayer) {
@@ -125,8 +131,8 @@ void Engine::think(int depth, Piece::Color maximazingPlayer)
 void Engine::makeMove(Move move)
 {
     board.make(move);
-    emit squareChanged(move.origin(), Piece());
-    emit squareChanged(move.target(), move.isPromotion() ? move.promotedPiece() : move.originPiece() );
+    emit squareChanged(move.origin(), board.squares[move.origin()]);
+    emit squareChanged(move.target(), board.squares[move.target()]);
 }
 
 void Engine::setPiece(Coord coord, Piece piece)

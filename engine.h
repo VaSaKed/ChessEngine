@@ -21,8 +21,11 @@ public:
 
 public:
     explicit Engine(QObject *parent = 0);
+
     void think(int depth, Piece::Color maximazingPlayer);
+
     float evaluatePosition(Piece::Color forSide);
+
     float minimax(int depth, Piece::Color maximazingPlayer);
 
 signals:

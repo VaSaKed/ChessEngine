@@ -1,42 +1,61 @@
 #ifndef ENGINETYPES_H
 #define ENGINETYPES_H
 
-#include <cstdint>
 #include <array>
 #include <vector>
+#include <cstdint>
+#include <algorithm>
+
 #include <QDebug>
 
 namespace Chess{
 
-using int8  = std::int8_t;
-using uint8 = std::uint8_t;
-using real  = float;
+using sint8  = std::int8_t;
+using uint8  = std::uint8_t;
+using sint16 = std::int16_t;
+using uint16 = std::uint16_t;
+using real   = float;
+
 template <typename T> using Vector = std::vector<T, std::allocator<T>>;
 template <typename T, std::size_t N> using Array = std::array<T, N>;
 
+enum Direction {
+    North       = 0,
+    NorthEast,
+    East,
+    SouthEast,
+    South,
+    SouthWest,
+    West,
+    NorthWest,
+    //---------------//
+    DirectionNumber,
+    Rotate_90_Degree = 2
+};
+
 class Coord {
-    int8 ofst;
-    static constexpr int8 INVALID = -63;
+    sint8 ofst;
+    static constexpr sint8 INVALID = -63;
 
 public:
     constexpr Coord()
         : ofst(INVALID) {}
 
-    constexpr Coord(int8_t value)
+    constexpr Coord(sint8 value)
         : ofst( value >= 64 || value < 0 ? INVALID : value) {}
 
-    constexpr Coord(int8_t file, int8_t rank)
+    constexpr Coord(sint8 file, sint8 rank)
         : ofst( file >= 8 || file < 0 || rank >= 8 || rank < 0 ? INVALID : file+rank*8) {}
 
     constexpr bool isValid() const {
         return ofst >= 0 && ofst < 64;
     }
 
-    constexpr int8 file() const {
+    constexpr sint8 file() const {
         return ofst%8;
     }
 
-    constexpr int8 rank() const {
+    constexpr sint8 rank() const {
         return ofst/8;
     }
 
@@ -78,17 +97,31 @@ public:
                 ? nextFile().prevRank() : Coord();
     }
 
-    constexpr operator int8() const
+    constexpr bool sameFile(Coord other) const {
+        return file() == other.file();
+    }
+
+    constexpr bool sameRank(Coord other) const {
+        return rank() == other.rank();
+    }
+
+    inline uint8 chebyshevDistance(Coord other) const {
+        return std::max( std::abs( other.file() - file() ), std::abs( other.rank() - rank() ) );
+    }
+
+    constexpr operator sint8() const
         { return ofst; }
 
 }; // !class Coord
 
 class Piece {
 
-    // |       flags Bit Meaning        |
+    uint8 flags;
+    // | Piece flags bits meaning :     |
+    // | ------------------------------ |
     // | Type  | Moved | Unused | Color |
     // | 0 - 2 |   3   | 4 - 6  |   7   |
-    uint8 flags;
+
 
 public:
 
@@ -114,6 +147,7 @@ public:
         White = 0,
         Black = 1
     };
+
 
     constexpr Piece()
         : flags(0) {}
@@ -152,35 +186,61 @@ public:
     constexpr operator uint8() const
         { return flags; }
 
+    friend Color operator!(Color self);
+
 }; // !class Piece
 
-class Move {
+// is handy
+inline Piece::Color operator!(Piece::Color self) {return Piece::Color(self == Piece::White ? Piece::Black : Piece::White);}
 
+class Move {
     Coord orig;
     Coord trgt;
-    Piece origPiece;
-    Piece captPiece;
-    uint8 moveType;
+    uint8 moveFlags;
+    // | moveFlags bits meaning:                                   |
+    // | --------------------------------------------------------- |
+    // | Capture |  FirstMove | SpecialPawn | SpecialKing | Unused |
+    // |     0   |      1     |      2      |      3      |   4-7  |
+
+    uint8 pieceSpecific;
+    // holds piece specific info
+    //  - castling for kings and promotion for pawns
 
 public:
-    enum MoveType : uint8 {
-        Standart        = 0,
-        PromoteToQueen  = 1,
-        PromoteToKnight = (1<<1),
-        PromoteToRook   = (1<<2),
-        PromoteToBishop = (1<<3),
-        CastleRight     = (1<<4),
-        CastleLeft      = (1<<5)
+
+    enum MoveFlags {
+        NoFlags           = 0,
+        CaptureFlag       = (1<<0),
+        FirstMoveFlag     = (1<<1),
+        PawnMoveFlag      = (1<<2),
+        KingMoveFlag      = (1<<3)
+    };
+
+    enum SpecialMove {
+        NotSpecial      = 0,
+        // Pawn Special
+        DoublePush      = (1<<0),
+        EnPassant       = (1<<1),
+        PromoteToQueen  = (1<<2),
+        PromoteToKnight = (1<<3),
+        PromoteToRook   = (1<<4),
+        PromoteToBishop = (1<<5),
+        // King Special
+        CastleLeft      = (1<<0),
+        CastleRight     = (1<<1)
     };
 
     constexpr Move()
-        : orig(), trgt(), origPiece(), captPiece(), moveType(Standart) {}
+        : orig(), trgt(), moveFlags(0), pieceSpecific(0) {}
 
-    constexpr Move(Coord origin, Coord target, Piece sourcePiece, Piece capturedPiece = Piece(), MoveType moveType = Standart)
-        : orig(origin), trgt(target), origPiece(sourcePiece), captPiece(capturedPiece), moveType(moveType) {}
+    constexpr Move(Coord origin, Coord target, bool isFirstMove = false, bool isCapture = false)
+        : orig(origin), trgt(target), moveFlags( isFirstMove << 1 | isCapture << 0), pieceSpecific(0) {}
 
-    constexpr bool isValid() const {
-        return !origPiece.isEmpty() && orig.isValid() && trgt.isValid();
+    constexpr Move(Coord origin, Coord target, MoveFlags flags, SpecialMove special)
+        : orig(origin), trgt(target), moveFlags(flags), pieceSpecific(special) {}
+
+    bool constexpr isValid() const {
+        return orig.isValid() && trgt.isValid();
     }
 
     constexpr Coord origin() const{
@@ -191,45 +251,31 @@ public:
         return trgt;
     }
 
-    constexpr Piece originPiece() const {
-        return origPiece;
-    }
-
-    constexpr Piece capturedPiece() const {
-        return captPiece;
-    }
-
-    constexpr MoveType type() const {
-        return MoveType(moveType);
+    constexpr MoveFlags flags() const {
+        return MoveFlags(moveFlags);
     }
 
     constexpr bool isPromotion() const {
-        return moveType == PromoteToQueen || moveType == PromoteToKnight
-                || moveType == PromoteToRook || moveType == PromoteToBishop;
-    }
-
-    constexpr Piece promotedPiece() const {
-        return moveType == PromoteToQueen ? Piece(Piece::Queen, origPiece.color())
-            : moveType == PromoteToKnight ? Piece(Piece::Knight, origPiece.color())
-            : moveType == PromoteToRook   ? Piece(Piece::Rook, origPiece.color())
-            : moveType == PromoteToBishop ? Piece(Piece::Bishop, origPiece.color())
-            : Piece();
+        return (moveFlags & PawnMoveFlag)
+                && (pieceSpecific == PromoteToQueen
+                    || pieceSpecific == PromoteToKnight
+                    || pieceSpecific == PromoteToRook
+                    || pieceSpecific == PromoteToBishop);
     }
 
     constexpr bool isCastle() const {
-        return moveType == CastleRight || moveType == CastleLeft;
+        return (moveFlags & PawnMoveFlag)
+                && (pieceSpecific == CastleRight
+                    || pieceSpecific == CastleLeft);
     }
 
-    constexpr bool sameVector(Move other) {
+    constexpr bool sameVector(Move other) const  {
         return orig == other.orig && trgt == other.trgt;
     }
 
-    constexpr bool operator==(Move other) {
-        return orig == other.orig && trgt == other.trgt
-                && origPiece == other.origPiece && captPiece == other.captPiece
-                && moveType == other.moveType;
+    constexpr bool operator==(Move other) const {
+        return orig == other.orig && trgt == other.trgt && moveFlags == other.moveFlags && pieceSpecific == other.pieceSpecific;
     }
-
 }; // !class Move
 
 } // !namesapce Chess

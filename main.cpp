@@ -17,6 +17,7 @@ int main(int argc, char*argv[])
     QObject::connect(uib, SIGNAL(userMoved(Chess::Move)), eng, SLOT(userMoved(Chess::Move)));
     QObject::connect(eng, SIGNAL(squareChanged(Chess::Coord,Chess::Piece)), uib, SLOT(setPiece(Chess::Coord,Chess::Piece)));
 
+
     for(int i = 0; i < 8; ++i){
         eng->setPiece(Coord(i,1), Piece(Piece::Pawn, Piece::White));
         eng->setPiece(Coord(i,6), Piece(Piece::Pawn, Piece::Black));

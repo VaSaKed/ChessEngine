@@ -23,7 +23,6 @@ public:
     }
 public slots:
     void setPiece(Chess::Coord coord, Chess::Piece piece) {
-
         uBoard.setPiece(coord, piece);
         updateSquare(coord.file(), 7-coord.rank());
     }
@@ -121,13 +120,11 @@ private:
             int trgtFile = event->pos().x() / squareSize.width();
             int trgtRank = 7 - event->pos().y() / squareSize.width();
 
-            Chess::Piece src  = uBoard.piece(Chess::Coord(srcFile, srcRank));
-            Chess::Piece trgt = uBoard.piece(Chess::Coord(trgtFile, trgtRank));
+            //Chess::Piece src  = uBoard.piece(Chess::Coord(srcFile, srcRank));
+            //Chess::Piece trgt = uBoard.piece(Chess::Coord(trgtFile, trgtRank));
 
             emit userMoved(Chess::Move(Chess::Coord(srcFile, srcRank),
-                                       Chess::Coord(trgtFile, trgtRank),
-                                       src,
-                                       trgt));
+                                       Chess::Coord(trgtFile, trgtRank) ));
 
             event->accept();
         } else {
@@ -167,8 +164,33 @@ private:
         painter.end();
 
         square->setPixmap(tempPixmap);
+        Chess::Vector<Chess::Move> possibleMoves = uBoard.possibleMoves(Chess::Coord(srcFile,srcRank));
+        for(Chess::Move move : possibleMoves) {
+            int y = 7 - move.target().rank();
+            int x = move.target().file();
+
+            QPixmap result = squares[y][x]->pixmap() ? *squares[y][x]->pixmap() : QPixmap();
+            if (result.isNull()){
+                result = QPixmap(squareSize);
+                result.fill(QColor(0,0,0,0));
+            }
+            QPainter p;
+            p.begin(&result);
+            p.setBrush(QBrush(QColor(250, 250, 150, 200)));
+            p.setPen(QColor(150, 200, 150, 200));
+            p.drawEllipse(result.rect().center(), result.width()/10, result.height()/10);
+            p.end();
+
+            squares[y][x]->setPixmap(result);
+        }
         drag->exec(Qt::MoveAction);
         updateSquare(srcFile, 7-srcRank);
+
+        for(Chess::Move move : possibleMoves) {
+            int y = 7 - move.target().rank();
+            int x = move.target().file();
+            updateSquare(x,y);
+        }
     }
 signals:
     void userMoved(Chess::Move move);
