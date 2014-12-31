@@ -4,12 +4,10 @@ ChessEngine
 A Chess Engine in c++ using Qt for the GUI
 
 TODO:
-- [x] move generation
-- [x] move search algorithm  (minimax)
-- [ ] Castling
-- [ ] Checkmate check
-- [ ] Pawn Promotion
-- [ ] En passant
+- [x] legal move generation
+- [x] move search algorithm  (currently minimax)
+- [ ] hashing
+- [ ] multithreading
 
 Screenshot:
 ![Screenshot](https://github.com/VaSaKed/ChessEngine/blob/master/UI/Images/screenshot.png)

@@ -29,5 +29,6 @@ OTHER_FILES += \
     release/libwinpthread-1.dll \
     release/Qt5Core.dll \
     release/Qt5Gui.dll \
-    release/Qt5Widgets.dll
+    release/Qt5Widgets.dll \
+    README.md
 
