@@ -2,6 +2,7 @@
 #include <QCoreApplication>
 
 #include <algorithm>
+#include <chrono>
 
 namespace Chess {
 
@@ -10,7 +11,7 @@ Engine::Engine(QObject *parent) :
 {
 }
 
-float Engine::evaluatePosition(Piece::Color forSide)
+float Engine::evaluatePosition()
 {
     uint8 pCnt[2][7] = {};
 
@@ -27,16 +28,14 @@ float Engine::evaluatePosition(Piece::Color forSide)
             + 3.0 * (pCnt[Piece::White][Piece::Knight] - pCnt[Piece::Black][Piece::Knight])
             + 1.0 * (pCnt[Piece::White][Piece::Pawn]   - pCnt[Piece::Black][Piece::Pawn]);
 
-    weight = (forSide == Piece::White) ? weight : -weight;
-
     return weight;
 }
 
-float Engine::minimax(int depth, Piece::Color maximazingPlayer)
+float Engine::minimax(int depth)
 {
     minimaxMoveCnt++;
     if (depth == 0)
-        return evaluatePosition(maximazingPlayer);
+        return evaluatePosition();
 
 
     Vector<Move> movesList = board.possibleMoves(board.side());
@@ -45,18 +44,19 @@ float Engine::minimax(int depth, Piece::Color maximazingPlayer)
     /* No Valid Moves */
     if (movesList.size() == 0) {
         if (board.isKingAttacked(board.side())) {
-            return board.side() == maximazingPlayer ? -INFINITY : +INFINITY;
+            return board.side() == Piece::White ? -1000.0+(minimaxDepth-depth) : +1000.0-(minimaxDepth-depth);
         } else {
             return 0.0;     // It's a draw
         }
     }
 
-    float bestValue = 0.0;
-    if (board.side() == maximazingPlayer) {
+    float bestValue;
+
+    if (board.side() == Piece::White) {
         bestValue = -INFINITY;
         for (Move move : movesList) {
             board.make(move);
-            float val = minimax( depth-1, maximazingPlayer );
+            float val = minimax( depth-1 );
             if (val > bestValue){
                 bestValue = val;
                 if (depth == minimaxDepth)
@@ -69,9 +69,12 @@ float Engine::minimax(int depth, Piece::Color maximazingPlayer)
 
         for (Move move : movesList) {
             board.make(move);
-            float val = minimax( depth-1, maximazingPlayer );
-            if (val < bestValue)
+            float val = minimax( depth-1 );
+            if (val < bestValue) {
                 bestValue = val;
+                if (depth == minimaxDepth)
+                    minimaxMove = move;
+            }
             board.unmake();
 
         }
@@ -91,9 +94,9 @@ void Engine::userMoved(Move userMove)
         }
     }
     if ( validMove.isValid() ) {
-        makeMove(validMove);
-        qDebug() << QString("---Move #%1---").arg(board.movesDone.size());
+        qDebug() << QString("---Ply #%1---").arg(board.movesDone.size());
         qDebug() << "My Move:" << userMove.origin().file() << userMove.origin().rank() << "to" << userMove.target().file() << userMove.target().rank();
+        makeMove(validMove);
     } else if (possibleMoves.size() > 0){
         qDebug() << "Invalid move:" << userMove.origin().file() << userMove.origin().rank() << "to" << userMove.target().file() << userMove.target().rank();
         for (Move move : possibleMoves) {
@@ -103,42 +106,55 @@ void Engine::userMoved(Move userMove)
     } else {
         qDebug() << "Game Over";
     }
-
+    do  {
+    qDebug() << QString("---Ply #%1---").arg(board.movesDone.size());
     QCoreApplication::processEvents();
-    think(4, Piece::Black);
+    qDebug() << "AI thinks...";
+    think(4);
     QCoreApplication::processEvents();
 
-    qDebug() << "AI Move:" << minimaxMove.origin().file() << minimaxMove.origin().rank()
-             << "to" << minimaxMove.target().file() << minimaxMove.target().rank()
-             << QString("(Analized %1 moves)").arg(minimaxMoveCnt);
-
-    qDebug() << QString("-------------");
     if (minimaxMove.isValid()) {
         makeMove(minimaxMove);
     } else {
         qDebug() << "Game Over";
     }
+    } while (minimaxMove.isValid());
 }
 
-void Engine::think(int depth, Piece::Color maximazingPlayer)
+void Engine::think(int depth)
 {
     minimaxMove = Move();
     minimaxDepth = depth;
     minimaxMoveCnt = 0;
-    qDebug() << "AI Score:" << minimax(depth, maximazingPlayer);
+    auto start_time = std::chrono::high_resolution_clock::now();
+    real bestMoveScore = minimax(depth);
+    auto stop_time = std::chrono::high_resolution_clock::now();
+    int ms = std::chrono::duration_cast<std::chrono::milliseconds>(stop_time - start_time).count();
+    ms = std::max(ms, 1); // prevent the good old divide by 0 problem :)
+
+    qDebug() << " score:" << bestMoveScore;
+    qDebug() << " nodes analized:" << minimaxMoveCnt <<  ms << "ms"
+             << "nodes/s =" << (minimaxMoveCnt / ms * 1000);
+    qDebug() << "AI Move:" << minimaxMove.origin().file() << minimaxMove.origin().rank()
+             << "to" << minimaxMove.target().file() << minimaxMove.target().rank();
 }
 
 void Engine::makeMove(Move move)
 {
     board.make(move);
-    emit squareChanged(move.origin(), board.squares[move.origin()]);
-    emit squareChanged(move.target(), board.squares[move.target()]);
+    emit boardChanged(board);
 }
 
 void Engine::setPiece(Coord coord, Piece piece)
 {
     board.setPiece(coord, piece);
-    emit squareChanged(coord, piece);
+    emit boardChanged(board);
+}
+
+void Engine::setBoard(Board newBoard)
+{
+    this->board = newBoard;
+    emit boardChanged(board);
 }
 
 } // !namespace Chess

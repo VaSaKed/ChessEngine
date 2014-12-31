@@ -22,19 +22,20 @@ public:
 public:
     explicit Engine(QObject *parent = 0);
 
-    void think(int depth, Piece::Color maximazingPlayer);
+    void think(int depth);
 
-    float evaluatePosition(Piece::Color forSide);
+    float evaluatePosition();
 
-    float minimax(int depth, Piece::Color maximazingPlayer);
-
-signals:
-    void squareChanged(Chess::Coord coord, Chess::Piece newPiece);
+    float minimax(int depth);
 
 public slots:
     void userMoved(Chess::Move userMove);
     void makeMove(Chess::Move move);
     void setPiece(Chess::Coord coord, Chess::Piece piece);
+    void setBoard(Board newBoard);
+
+signals:
+    void boardChanged(Chess::Board board);
 
 };
 

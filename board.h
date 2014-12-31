@@ -17,11 +17,13 @@ public:
     Board() :
         squares(), m_sideToMove(Piece::White) {}
 
-    bool isSquareAttacked(Coord where, Piece::Color attackingSide);
+    static Board fromFEN(std::string fenRecord);
+
+    bool isSquareAttacked(Coord square, Piece::Color attackingSide);
 
     bool isKingAttacked(Piece::Color side);
 
-    Vector<Move> possibleMoves(Coord from) ;
+    Vector<Move> possibleMoves(const Coord from) ;
 
     Vector<Move> possibleMoves(Piece::Color forSide) ;
 
@@ -34,7 +36,11 @@ public:
     }
 
     inline void setPiece(Coord coord, Piece piece) {
-        squares[coord] = piece;
+        if (coord.isValid()) {
+            squares[coord] = piece;
+        } else {
+            qDebug() << "Board::setPiece() Invalid Coord: should never happen!";
+        }
     }
 
     inline Piece piece(Coord coord) const {
@@ -43,6 +49,10 @@ public:
 
     inline Piece::Color side() const {
         return m_sideToMove;
+    }
+
+    inline Piece & operator[](Coord square) {
+        return squares[square];
     }
 };
 
