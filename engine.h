@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include "board.h"
+#include "minimaxsearch.h"
 
 
 namespace Chess{
@@ -13,20 +14,10 @@ class Engine : public QObject
 
 public:
     Board board;
-
-
-    Move minimaxMove;
-    int minimaxMoveCnt;
-    int minimaxDepth;
+    MinimaxSearch minimax;
 
 public:
     explicit Engine(QObject *parent = 0);
-
-    void think(int depth);
-
-    float evaluatePosition();
-
-    float minimax(int depth);
 
 public slots:
     void userMoved(Chess::Move userMove);

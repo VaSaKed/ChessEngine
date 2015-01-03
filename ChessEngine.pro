@@ -4,13 +4,15 @@ QT += gui core widgets
 SOURCES += main.cpp \
     board.cpp \
     UI/uiboard.cpp \
-    engine.cpp
+    engine.cpp \
+    minimaxsearch.cpp
 
 HEADERS += \
     board.h \
     UI/uiboard.h \
     enginetypes.h \
-    engine.h
+    engine.h \
+    minimaxsearch.h
 
 RESOURCES += \
     UI/Images.qrc

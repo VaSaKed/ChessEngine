@@ -284,12 +284,30 @@ public:
     constexpr operator uint8() const
         { return flags; }
 
-    friend Color operator!(Color self);
+    friend constexpr Color operator!(Color self);
 
 }; // !class Piece
 
-// inverts the Piece::Color color, is very handy
-inline Piece::Color operator!(Piece::Color color) {return Piece::Color(color == Piece::White ? Piece::Black : Piece::White);}
+// Handy functions
+// inverts the Piece::Color color
+constexpr Piece::Color operator!(Piece::Color color) {return Piece::Color(color == Piece::White ? Piece::Black : Piece::White);}
+
+// for debugging
+inline QDebug operator<< (QDebug d, const Coord coord) {
+    d.nospace() << "(";
+    if (coord.isValid())
+        d.nospace() << coord.file() << "," << coord.rank();
+    else
+        d.nospace() << "inv,inv";
+    d.nospace() << ")";
+    return d;
+}
+
+inline QDebug operator<< (QDebug d, const Move move) {
+    d << move.origin() << " to " << move.target();
+    d.space() << QString("%1 %2").arg(move.flags(), 0, 16).arg(move.type(), 0, 16);
+    return d;
+}
 
 } // !namesapce Chess
 
