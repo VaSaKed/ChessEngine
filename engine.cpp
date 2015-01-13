@@ -1,6 +1,6 @@
 #include "engine.h"
-#include <QCoreApplication>
 
+#include <QCoreApplication>
 #include <chrono>
 
 namespace Chess {
@@ -8,7 +8,6 @@ namespace Chess {
 Engine::Engine(QObject *parent) :
     QObject(parent)
 {
-    minimax.setDepth(4);
 }
 
 
@@ -39,24 +38,27 @@ void Engine::userMoved(Move userMove)
 
     Move minimaxMove;
 
-    do  {
+    //do  {
     qDebug() << QString("---Ply #%1---").arg(board.movesDone.size());
     QCoreApplication::processEvents();
     qDebug() << "AI thinks...";
-    minimax.setPostion(board);
+    SearchRequest request;
+    request.board = board;
+    request.depth = 5;
+    request.movesFilter = Vector<Move>();
     auto start_time = std::chrono::high_resolution_clock::now();
-    minimax.search();
+    SearchResult result = minimax.search(request);
     auto stop_time = std::chrono::high_resolution_clock::now();
     int ms = std::chrono::duration_cast<std::chrono::milliseconds>(stop_time - start_time).count();
     ms = std::max(ms, 1); // prevent the good old divide by 0 problem :)
-    real bestMoveScore = minimax.foundMovesScore;
-    minimaxMove = minimax.foundMoves.size() > 0 ? minimax.foundMoves[0] : Move();
-    int minimaxMoveCnt = minimax.searchMoveCnt;
+    real bestMoveScore = result.score;
+    minimaxMove = result.moves.size() > 0 ? result.moves[0] : Move();
+    int minimaxMoveCnt = result.moveCnt;
 
     qDebug() << " score:" << bestMoveScore;
     qDebug() << " nodes analized:" << minimaxMoveCnt <<  ms << "ms"
              << "nodes/s =" << (minimaxMoveCnt / ms * 1000);
-    qDebug() << "AI Move:" << minimaxMove.origin();
+    qDebug() << "AI Move:" << minimaxMove;
     QCoreApplication::processEvents();
 
     if (minimaxMove.isValid()) {
@@ -64,7 +66,7 @@ void Engine::userMoved(Move userMove)
     } else {
         qDebug() << "Game Over";
     }
-    } while (minimaxMove.isValid());
+    //} while (minimaxMove.isValid());
 }
 
 void Engine::makeMove(Move move)

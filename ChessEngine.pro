@@ -5,14 +5,18 @@ SOURCES += main.cpp \
     board.cpp \
     UI/uiboard.cpp \
     engine.cpp \
-    minimaxsearch.cpp
+    abstractthread.cpp \
+    search.cpp \
+    evaluate.cpp
 
 HEADERS += \
     board.h \
     UI/uiboard.h \
     enginetypes.h \
     engine.h \
-    minimaxsearch.h
+    abstractthread.h \
+    search.h \
+    evaluate.h
 
 RESOURCES += \
     UI/Images.qrc

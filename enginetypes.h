@@ -208,7 +208,6 @@ class Piece {
     // | Type  | Moved | Unused | Color |
     // | 0 - 2 |   3   | 4 - 6  |   7   |
 
-
 public:
 
     static constexpr uint8 TypeOfst  = 0;

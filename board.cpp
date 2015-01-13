@@ -220,7 +220,7 @@ Vector<Move> Board::possibleMoves(const Coord from)
 
     if (piece.isKing()) {
 
-        for (int direction=North; direction < DirectionMax; direction += Rotate_90_Degree) {
+        for (int direction=North; direction < DirectionMax; direction += Rotate_45_Degree) {
             switch (direction) {
             case East:      to = from.nextFile(); break;
             case West:      to = from.prevFile(); break;
@@ -331,7 +331,7 @@ Vector<Move> Board::possibleMoves(const Coord from)
     }
 
     if (piece.isRook() || piece.isQueen() ) {
-        for(int direction=East; direction < DirectionMax; direction += Rotate_90_Degree) {
+        for(int direction=North; direction < DirectionMax; direction += Rotate_90_Degree) {
 
             to = from;
             while(to.isValid() ) {

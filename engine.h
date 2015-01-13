@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include "board.h"
-#include "minimaxsearch.h"
+#include "search.h"
 
 
 namespace Chess{
@@ -14,7 +14,7 @@ class Engine : public QObject
 
 public:
     Board board;
-    MinimaxSearch minimax;
+    Search minimax;
 
 public:
     explicit Engine(QObject *parent = 0);

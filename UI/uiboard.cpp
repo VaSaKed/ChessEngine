@@ -12,8 +12,8 @@ UIBoard::UIBoard(QWidget *parent)
             squares[y][x] = new QLabel(this);
             squares[y][x]->setAlignment(Qt::AlignCenter);
             squares[y][x]->setAutoFillBackground(true);
-            QColor squareColor = whiteSquare ? QColor(241,210,169)
-                                             : QColor(186,131,89);
+            QColor squareColor = whiteSquare ? QColor(238,238,210)  //QColor(241,210,169)
+                                             : QColor(118,150,86);//QColor(186,131,89);
             QPalette p(this->palette());
             p.setColor(QPalette::Window, squareColor);
             squares[y][x]->setPalette(p);
@@ -140,8 +140,6 @@ void UIBoard::mousePressEvent(QMouseEvent *event){
         return;
     }
 
-    QPixmap pixmap = *square->pixmap();
-
     QByteArray itemData;
     QDataStream dataStream(&itemData, QIODevice::WriteOnly);
     dataStream << srcFile << srcRank;
@@ -151,13 +149,16 @@ void UIBoard::mousePressEvent(QMouseEvent *event){
 
     QDrag *drag = new QDrag(this);
     drag->setMimeData(mimeData);
-    drag->setPixmap(pixmap);
+    if (square->pixmap())
+        drag->setPixmap(*square->pixmap());
     drag->setHotSpot(event->pos() - square->pos());
 
-    QPixmap tempPixmap = pixmap;
+    QPixmap tempPixmap = QPixmap(squareSize);
+    tempPixmap.fill(QColor(0,0,0,0));
     QPainter painter;
     painter.begin(&tempPixmap);
-    painter.fillRect(pixmap.rect(), QColor(127, 127, 127, 127));
+    painter.setPen(QPen(QBrush(QColor(100,100,120, 100)), squareSize.width()/8));
+    painter.drawRect(tempPixmap.rect());
     painter.end();
 
     square->setPixmap(tempPixmap);
@@ -166,13 +167,29 @@ void UIBoard::mousePressEvent(QMouseEvent *event){
         int y = 7 - move.target().rank();
         int x = move.target().file();
 
-        QPixmap result = square->pixmap() ? *square->pixmap(): QPixmap();
-        if (result.isNull())
+        QPixmap result;
+        if (squares[y][x]->pixmap() && !squares[y][x]->pixmap()->isNull() ) {
+            result = *squares[y][x]->pixmap();
+        } else {
+            result = QPixmap(squareSize);
             result.fill(QColor(0,0,0,0));
+        }
+
+        QRadialGradient gradient(result.rect().center(), result.width()/10);
+        if (!uBoard.isOccupied(Chess::Coord(x, 7-y))) {
+            gradient.setColorAt(0, QColor::fromRgbF(0.9, 0.9, 1, 1));
+            gradient.setColorAt(1, QColor::fromRgbF(0.2, 0.2, 0, 0.4));
+        } else {
+            gradient.setColorAt(0, QColor::fromRgbF(1, 0.6, 0.6, 1));
+            gradient.setColorAt(1, QColor::fromRgbF(0.7, 0.2, 0, 0.4));
+        }
+
         QPainter p;
         p.begin(&result);
-        p.setBrush(QBrush(QColor(250, 250, 150, 200)));
-        p.setPen(QColor(150, 200, 150, 200));
+        p.setPen(QPen(QBrush(QColor(100,100,120, 100)), squareSize.width()/8));
+        p.drawRect(result.rect());
+        p.setPen(Qt::NoPen);
+        p.setBrush(QBrush(gradient));
         p.drawEllipse(result.rect().center(), result.width()/10, result.height()/10);
         p.end();
 
