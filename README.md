@@ -7,7 +7,7 @@ TODO:
 - [x] legal move generation
 - [x] move search algorithm  (currently minimax)
 - [ ] hashing
-- [ ] multithreading
+- [x] multithreading
 
 Screenshot:
 ![Screenshot](https://github.com/VaSaKed/ChessEngine/blob/master/UI/Images/screenshot.png)
